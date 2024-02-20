@@ -10,8 +10,6 @@ import numpy as np
 import gym
 from gym import spaces
 from gym.utils import seeding
-from data_collector import DataCollector
-from math import sqrt
 from gym.envs.classic_control import rendering
 
 #create function to calculate Manhattan distance
@@ -144,20 +142,3 @@ class AimBotWithResetEnv(gym.Env):
             self.viewer.close()
             self.viewer = None
 
-
-if __name__ == '__main__':
-    env = MountainCarWithResetEnv()
-    print(env)
-    #Collecting 100K data samples
-    states, actions, rewards, next_states, done_flags = DataCollector(env).collect_data(10)
-    print(actions)
-    state = env.reset_specific(0.5, 0.0)
-    next_state, reward, done, _ = env.step(1)
-    print(reward)
-    # env.render()
-    is_done = False
-    # while not is_done:
-    #     _, r, is_done, _ = env.step(2)  # go left
-    #     env.render()
-    #     print(r)
-    # env.close()
