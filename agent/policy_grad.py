@@ -1,6 +1,6 @@
 import numpy as np
 
-from mountain_car_with_data_collection import MountainCarWithResetEnv
+from mountain_car_with_data_collection import AimBotWithResetEnv
 from data_collector import DataCollector
 from data_transformer import DataTransformer
 from radial_basis_function_extractor import RadialBasisFunctionExtractor
@@ -36,19 +36,17 @@ class Policy:
         rewards_sum = 0
         gradients_sum = 0
         states_array = []
-        x0 = self.env.reset()
-        encoded_state = feature_extractor.encode_states_with_radial_basis_functions(np.array([x0]))
+        state = self.env.reset()
         #perfroming a rollout
         for i in range (tau):
-            _, action = self.softmax_policy(feature_extractor, encoded_state, alpha)
+            _, action = self.softmax_policy(feature_extractor, state, alpha)
             state, reward, done, _ = env.step(action)
             states_array.append(state)
-            encoded_state = feature_extractor.encode_states_with_radial_basis_functions(np.array([state]))
             # encoded_state = evaluator._process_single_state(states)
             # rewards.append(reward)
             # gradients.append(self.log_softmax_gradient(feature_extractor, alpha, encoded_state, action))
             rewards_sum += self.modify_reward(reward)
-            gradients_sum += self.log_softmax_gradient(feature_extractor, alpha, encoded_state, action)
+            gradients_sum += self.log_softmax_gradient(feature_extractor, alpha, state, action)
             if done:
                 break
         
@@ -58,11 +56,11 @@ class Policy:
         self.W = self.W + epsilon * grad.T
         return self.W, states_array
 
-    def softmax_policy(self, feature_extracor, feature_vector, alpha):
+    def softmax_policy(self, feature_extractor, state, alpha):
         array = []
         sum = 0 
         for i in range(3):
-            encoded_states_tiled = feature_extractor.tiling(feature_vector, i)
+            encoded_states_tiled = feature_extractor.tiling(state, i)
             up = np.exp(alpha*encoded_states_tiled@self.W - max(alpha*encoded_states_tiled@self.W))
             array.append(up)
             sum += up
@@ -75,7 +73,7 @@ class Policy:
         return policy, action
 
     def log_softmax_gradient(self, feature_extractor, alpha, encoded_states, action):
-        up_sum = np.zeros(len(encoded_states[0]) * 3) 
+        up_sum = np.zeros(len(encoded_states[0]) * 5)
         down_sum = 0 # dim is 1 (exp of inner prod) 
         for i in range(3):
             # print('shape before tile:', encoded_states.shape)
@@ -93,6 +91,12 @@ class Policy:
     def get_max_action(self, encoded_state):
         _, action = self.softmax_policy(self.feature_extractor, encoded_state, alpha=1)
         return action
+    def set_w(self, w):
+        assert self.w.shape == w.shape
+        change = np.linalg.norm(w - self.w)
+        print(f'changed w, norm diff is {change}')
+        self.w = w
+        return change
 
 
 
@@ -108,7 +112,7 @@ if __name__ == '__main__':
     samples_to_collect = 100000
     # samples_to_collect = 150000
     # samples_to_collect = 10000
-    number_of_kernels_per_dim = [12, 10]
+    number_of_kernels_per_dim = [12, 10, 12, 10]
     gamma = 0.99
     w_updates = 100
     evaluation_number_of_games = 10
@@ -117,7 +121,7 @@ if __name__ == '__main__':
     np.random.seed(123)
     # np.random.seed(234)
 
-    env = MountainCarWithResetEnv()
+    env = AimBotWithResetEnv((480, 640), 4)
     # # collect data
     # states, actions, rewards, next_states, done_flags = DataCollector(env).collect_data(samples_to_collect)
     # # get data success rate
@@ -130,15 +134,7 @@ if __name__ == '__main__':
     # next_states = data_transformer.transform_states(next_states)
     # # process with radial basis functions
     feature_extractor = RadialBasisFunctionExtractor(number_of_kernels_per_dim)
-    # encode all states:
-    # encoded_states = feature_extractor.encode_states_with_radial_basis_functions(states)    
-    # print(encoded_states.shape)
-    # encoded_next_states = feature_extractor.encode_states_with_radial_basis_functions(next_states)
-    # # set a new linear policy
-    linear_policy = LinearPolicy(feature_extractor.get_number_of_features(), 3, False)
-    # but set the weights as random
-    linear_policy.set_w(np.random.uniform(size=linear_policy.w.shape))
-    W = linear_policy.w
+    W = np.random.uniform(size=4)
     print(W)
     # policy , action = softmax_policy(linear_policy.w, feature_extractor, encoded_states[1, :], alpha=1)
     # print(action)
@@ -157,12 +153,11 @@ if __name__ == '__main__':
         # new_w = policy_gradient_iteration(
         #     encoded_states, encoded_next_states, actions, rewards, done_flags, linear_policy, gamma
         # )
-        norm_diff = linear_policy.set_w(new_W)
+        norm_diff = policy.set_w(new_W)
         if norm_diff < 0.00001:
             break
         data_transformer.set_using_states(states)
         states = data_transformer.transform_states(states)
-        policy = Policy(env, data_transformer, feature_extractor,  new_W, epsilon=0.3)
         evaluator = GamePlayer(env, data_transformer, feature_extractor, policy)
         success_rate.append(evaluator.play_games(evaluation_number_of_games, evaluation_max_steps_per_game))
     print('done policy gradient')

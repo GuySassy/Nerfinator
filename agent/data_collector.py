@@ -6,12 +6,14 @@ class DataCollector:
         self._env_with_reset = env_with_reset
 
     def state_selection(self):
-        position = np.random.uniform(self._env_with_reset.min_position, self._env_with_reset.max_position)
-        speed = np.random.uniform(-self._env_with_reset.max_speed, self._env_with_reset.max_speed)
-        return position, speed
+        reticle_x = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        target_x = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        reticle_y = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        target_y = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        return (reticle_x, reticle_y), (target_x, target_y)
 
     def action_selection(self):
-        return np.random.choice(3)
+        return np.random.choice(4)
 
     def collect_data(self, number_of_samples):
         # result should be (s_t, a_t, r_t, s_{t+1})
