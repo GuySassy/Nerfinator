@@ -51,7 +51,7 @@ if __name__ == '__main__':
         # # collect data
         states, actions, rewards, next_states, done_flags = DataCollector(env).collect_data(samples_to_collect)
         # # get data success rate
-        data_success_rate = np.sum(rewards) / len(rewards)
+        data_success_rate = np.sum(done_flags[done_flags==True]) / len(rewards)
         print(f'success rate {data_success_rate}')
         # # standardize data
         data_transformer = DataTransformer()

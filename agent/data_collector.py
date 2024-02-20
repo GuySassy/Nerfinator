@@ -6,10 +6,10 @@ class DataCollector:
         self._env_with_reset = env_with_reset
 
     def state_selection(self):
-        reticle_x = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
-        target_x = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
-        reticle_y = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
-        target_y = np.random.uniform(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        reticle_x = np.random.randint(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        target_x = np.random.randint(self._env_with_reset.min_position_x, self._env_with_reset.max_position_x)
+        reticle_y = np.random.randint(self._env_with_reset.min_position_y, self._env_with_reset.max_position_y)
+        target_y = np.random.randint(self._env_with_reset.min_position_y, self._env_with_reset.max_position_y)
         return (reticle_x, reticle_y), (target_x, target_y)
 
     def action_selection(self):
@@ -20,7 +20,7 @@ class DataCollector:
         result = []
         for _ in range(number_of_samples):
             state = self.state_selection()
-            self._env_with_reset.reset_specific(state[0], state[1])
+            state = self._env_with_reset.reset_specific(state[0], state[1])
             action = self.action_selection()
             next_state, reward, done, _ = self._env_with_reset.step(action)
             result_tuple = (state, action, reward, next_state, done)
