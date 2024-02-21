@@ -10,8 +10,6 @@ import numpy as np
 import gym
 from gym import spaces
 from gym.utils import seeding
-from data_collector import DataCollector
-from math import sqrt
 from gym.envs.classic_control import rendering
 
 #create function to calculate Manhattan distance
@@ -31,11 +29,11 @@ class AimBotWithResetEnv(gym.Env):
         self.tolerance_x = accuracy
         self.tolerance_y = accuracy
 
-        self.delta_y = 0.001
-        self.delta_x = 0.001
+        self.delta_y = 9
+        self.delta_x = 16
         self.gravity = 0.0025
 
-        self.low = np.array([self.min_position_x, -self.min_position_y])
+        self.low = np.array([self.min_position_x, self.min_position_y])
         self.high = np.array([self.max_position_x, self.max_position_y])
 
         self.viewer = None
@@ -55,7 +53,7 @@ class AimBotWithResetEnv(gym.Env):
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         # self.step is ((x,y),(x,y))
-        reticle, target = self.state
+        reticle, target = self.state[:2], self.state[2:]
         if action == 0:
             reticle[0] += self.delta_x
             target[0] += self.delta_x
@@ -79,13 +77,13 @@ class AimBotWithResetEnv(gym.Env):
             reward = float(done) * 100
         else:
             done = False
-            reward = self.manhattan(reticle, target)
-        self.state = [reticle, target]
+            reward = 1 / (1+self.manhattan(reticle, target))
+        np.array((reticle, target)).flatten()
         return np.array(self.state), reward, done, {}
 
     def reset(self):
-        target = (self.np_random.uniform(low=0, high=self.high[0]), self.np_random.uniform(low=0, high=self.high[1]))
-        reticle = (self.np_random.uniform(low=0, high=self.high[0]), self.np_random.uniform(low=0, high=self.high[1]))
+        target = (int(self.np_random.uniform(low=0, high=self.high[0])), int(self.np_random.uniform(low=0, high=self.high[1])))
+        reticle = (int(self.np_random.uniform(low=0, high=self.high[0])), int(self.np_random.uniform(low=0, high=self.high[1])))
         return self.reset_specific(reticle, target)
 
     def reset_specific(self, reticle_position, target_position):
@@ -93,8 +91,8 @@ class AimBotWithResetEnv(gym.Env):
         assert self.min_position_x <= reticle_position[0] <= self.max_position_x
         assert self.min_position_y <= target_position[1] <= self.max_position_y
         assert self.min_position_y <= target_position[1] <= self.max_position_y
-        self.state = (reticle_position, target_position)
-        return np.array(self.state).flatten()
+        self.state = np.array((reticle_position, target_position)).flatten()
+        return self.state
 
     def _height(self, xs):
         return np.sin(3 * xs) * .45 + .55
@@ -119,8 +117,8 @@ class AimBotWithResetEnv(gym.Env):
 
         # Get current state information
         # For example, let's say state is represented by (x, y) coordinates of two symbols
-        symbol1_x, symbol1_y = self.state[0]
-        symbol2_x, symbol2_y = self.state[1]
+        symbol1_x, symbol1_y = self.state[0], self.state[1]
+        symbol2_x, symbol2_y = self.state[2], self.state[3]
 
         # Draw symbols on the viewer
         symbol_size = 10  # Size of the symbols
@@ -144,20 +142,3 @@ class AimBotWithResetEnv(gym.Env):
             self.viewer.close()
             self.viewer = None
 
-
-if __name__ == '__main__':
-    env = MountainCarWithResetEnv()
-    print(env)
-    #Collecting 100K data samples
-    states, actions, rewards, next_states, done_flags = DataCollector(env).collect_data(10)
-    print(actions)
-    state = env.reset_specific(0.5, 0.0)
-    next_state, reward, done, _ = env.step(1)
-    print(reward)
-    # env.render()
-    is_done = False
-    # while not is_done:
-    #     _, r, is_done, _ = env.step(2)  # go left
-    #     env.render()
-    #     print(r)
-    # env.close()

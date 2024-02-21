@@ -1,12 +1,5 @@
 import numpy as np
 
-from mountain_car_with_data_collection import AimBotWithResetEnv
-from data_collector import DataCollector
-from data_transformer import DataTransformer
-from radial_basis_function_extractor import RadialBasisFunctionExtractor
-from linear_policy import LinearPolicy
-from game_player import GamePlayer
-
 class Policy:
     def __init__(self, env, data_transformer, feature_extractor, W, epsilon):
         self.env = env
@@ -40,7 +33,7 @@ class Policy:
         #perfroming a rollout
         for i in range (tau):
             _, action = self.softmax_policy(feature_extractor, state, alpha)
-            state, reward, done, _ = env.step(action)
+            state, reward, done, _ = self.env.step(action)
             states_array.append(state)
             # encoded_state = evaluator._process_single_state(states)
             # rewards.append(reward)
@@ -108,59 +101,5 @@ class Policy:
 #     y_tilde = np.exp(z - z_max) / np.sum(np.exp(z - z_max))
 #     return feature_vector*(y - y_tilde)
 
-if __name__ == '__main__':
-    samples_to_collect = 100000
-    # samples_to_collect = 150000
-    # samples_to_collect = 10000
-    number_of_kernels_per_dim = [12, 10, 12, 10]
-    gamma = 0.99
-    w_updates = 100
-    evaluation_number_of_games = 10
-    evaluation_max_steps_per_game = 1000
 
-    np.random.seed(123)
-    # np.random.seed(234)
-
-    env = AimBotWithResetEnv((480, 640), 4)
-    # # collect data
-    # states, actions, rewards, next_states, done_flags = DataCollector(env).collect_data(samples_to_collect)
-    # # get data success rate
-    # data_success_rate = np.sum(rewards) / len(rewards)
-    # print(f'success rate {data_success_rate}')
-    # # standardize data
-    data_transformer = DataTransformer()
-    # data_transformer.set_using_states(np.concatenate((states, next_states), axis=0))
-    # states = data_transformer.transform_states(states)
-    # next_states = data_transformer.transform_states(next_states)
-    # # process with radial basis functions
-    feature_extractor = RadialBasisFunctionExtractor(number_of_kernels_per_dim)
-    W = np.random.uniform(size=4)
-    print(W)
-    # policy , action = softmax_policy(linear_policy.w, feature_extractor, encoded_states[1, :], alpha=1)
-    # print(action)
-    # grad = log_softmax_gradient(linear_policy.w, feature_extractor, alpha=1, encoded_states=encoded_states[1,:], action=0)
-    # print(grad)
-    # # start an object that evaluates the success rate over time
-    policy = Policy(env, data_transformer, feature_extractor,  W, epsilon=0.3)
-    # state = env.reset()
-    # evaluator.play_game(evaluation_max_steps_per_game, start_state=state)
-    success_rate = []
-    for pol_grad_iteration in range(w_updates):
-        print(f'starting policy gradient iteration {pol_grad_iteration}')
-
-        new_W, states = policy.policy_gradient_iteration(feature_extractor, alpha=1, tau=evaluation_max_steps_per_game, epsilon=0.001)
-        # linear_policy.set_w(new_W)
-        # new_w = policy_gradient_iteration(
-        #     encoded_states, encoded_next_states, actions, rewards, done_flags, linear_policy, gamma
-        # )
-        norm_diff = policy.set_w(new_W)
-        if norm_diff < 0.00001:
-            break
-        data_transformer.set_using_states(states)
-        states = data_transformer.transform_states(states)
-        evaluator = GamePlayer(env, data_transformer, feature_extractor, policy)
-        success_rate.append(evaluator.play_games(evaluation_number_of_games, evaluation_max_steps_per_game))
-    print('done policy gradient')
-    evaluator.play_games(evaluation_number_of_games, evaluation_max_steps_per_game)
-    evaluator.play_game(evaluation_max_steps_per_game, render=True)
     
