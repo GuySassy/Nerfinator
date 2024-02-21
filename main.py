@@ -3,6 +3,7 @@ import torch
 from agent import DataCollector, DataTransformer, Policy, AimBotWithResetEnv, RadialBasisFunctionExtractor, GamePlayer
 from vision import Detector
 import numpy as np
+import cv2
 import math
 from functools import partial
 import time
@@ -27,6 +28,8 @@ def parse_arguments():
     parser.add_argument('--train_epochs', type=int, default=10, help='Number of training epochs')
     parser.add_argument('--train', type=str2bool, nargs='?', const=True, default=True, help='To train a model ?')
     parser.add_argument('--lr', type=float, default=1e-3, help='Maximum learning rate')
+    parser.add_argument('--detector_model', type=str, default='yolov8n',
+                        help='The prior gaussian pdf (diag of not')
     # Add more arguments here as needed
 
     return parser.parse_args()
@@ -40,6 +43,12 @@ if __name__ == '__main__':
     TRAIN_EPOCHS = args.train_epochs
     SAMPLES_NUM = args.samples
     DEBUG = 1
+    # vision part - works great
+    # detector = Detector(model_path=args.detector_model + '.pt')
+    # img = cv2.imread('img.jpg')
+    # detector.show_detections(image=img)
+    # target0 = detector.detect(img)
+    # rl part - needs debugging
     if DEBUG:
         samples_to_collect = SAMPLES_NUM
         number_of_kernels_per_dim = [12, 10, 12, 10]

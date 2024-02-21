@@ -3,7 +3,7 @@ import cv2
 
 
 class Detector():
-    def __init__(self, model_path='yolov8n.pt', target='cup'):
+    def __init__(self, model_path='yolov8n.pt', target='bowl'):
         self.model = YOLO(model_path)
         self.target = target
 
