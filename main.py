@@ -1,6 +1,7 @@
 import argparse
 import torch
 from agent import DataCollector, DataTransformer, Policy, AimBotWithResetEnv, RadialBasisFunctionExtractor, GamePlayer
+from vision import Detector
 import numpy as np
 import math
 from functools import partial
@@ -67,15 +68,14 @@ if __name__ == '__main__':
         # grad = log_softmax_gradient(linear_policy.w, feature_extractor, alpha=1, encoded_states=encoded_states[1,:], action=0)
         # print(grad)
         # # start an object that evaluates the success rate over time
-        policy = Policy(env, data_transformer, feature_extractor, W, epsilon=0.3)
+        policy = Policy(env, feature_extractor, W, epsilon=0.3)
         # state = env.reset()
         # evaluator.play_game(evaluation_max_steps_per_game, start_state=state)
         success_rate = []
         for pol_grad_iteration in range(TRAIN_EPOCHS):
             print(f'starting policy gradient iteration {pol_grad_iteration}')
 
-            new_W, states = policy.policy_gradient_iteration(feature_extractor, alpha=1,
-                                                             tau=evaluation_max_steps_per_game, epsilon=0.001)
+            new_W, states = policy.policy_gradient_iteration(alpha=1, tau=evaluation_max_steps_per_game, epsilon=0.001)
             # linear_policy.set_w(new_W)
             # new_w = policy_gradient_iteration(
             #     encoded_states, encoded_next_states, actions, rewards, done_flags, linear_policy, gamma
