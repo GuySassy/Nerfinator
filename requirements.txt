@@ -4,3 +4,5 @@ gym
 numpy
 pyglet
 scipy
+opencv-python
+ultralytics
